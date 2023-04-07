@@ -45,6 +45,7 @@ parser = ArgumentParser()
 
 parser.add_argument("--name", required=True, type=str, help="model_name")
 parser.add_argument("--dtype", type=str, help="float16 or int8 or int4", choices=["int8", "float16", "int4"], default="float16")
+#parser.add_argument("--dtype", type=str, help="float16 or int4", choices=["float16", "int4"], default="float16")
 parser.add_argument("--local_rank", required=False, type=int, help="used by dist launchers")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size")
 parser.add_argument("--benchmark", action="store_true", help="additionally run benchmark")
@@ -101,6 +102,7 @@ def get_checkpoint_files(model_name_or_path):
 
 model_name = args.name
 infer_dtype = args.dtype if args.dtype != 'int4' else 'int8'
+print(infer_dtype)
 
 tp_presharded_mode = True if model_name in tp_presharded_models else False
 
@@ -171,6 +173,7 @@ if args.benchmark:
     deepspeed.runtime.utils.see_memory_usage("pre-ds-inference-init", force=True)
 
 if kernel_inject:
+    kwargs = dict(replace_with_kernel_inject=True)
     if args.dtype == 'int8':
         bits = 4
     if args.dtype == 'int4':
@@ -184,6 +187,7 @@ if kernel_inject:
             }
         }
     }
+
 else:
     kwargs = dict(injection_policy={BloomBlock: ("self_attention.dense", "mlp.dense_4h_to_h")})
 
